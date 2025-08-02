@@ -5,16 +5,14 @@ import { useRouter } from "next/navigation"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
 import { supabase } from "@/lib/supabase"
-import { Trash2, ShoppingBag, Tag, ChevronDown, ChevronUp, MapPin, CheckCircle, AlertCircle } from "lucide-react"
+import { Plus, Minus, ShoppingBag, Tag, ChevronDown, ChevronUp, MapPin, CheckCircle, AlertCircle } from "lucide-react"
 
 export default function CartPage() {
   const router = useRouter()
-  const [cartItems, setCartItems] = useState(() => {
-    if (typeof window !== "undefined") {
-      return JSON.parse(localStorage.getItem('cart') || '[]');
-    }
-    return [];
-  });
+  const [cartItems, setCartItems] = useState([]);
+  const [isClient, setIsClient] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
   const [showCoupons, setShowCoupons] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState([]);
@@ -35,6 +33,13 @@ export default function CartPage() {
   });
 
   useEffect(() => {
+    // Initialize cart items from localStorage after component mounts
+    setIsClient(true);
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart));
+    }
+
     // Fetch available coupons
     const fetchCoupons = async () => {
       const { data, error } = await supabase.from('coupons').select('*');
@@ -55,12 +60,70 @@ export default function CartPage() {
     fetchPincodes();
   }, []);
 
+  const updateQuantity = (id: number, action: 'increment' | 'decrement') => {
+    setCartItems((prev) => {
+      const updatedCart = prev.map((item) => {
+        if (item.id === id) {
+          const currentQuantity = item.quantity || 1;
+          let newQuantity = currentQuantity;
+          
+          if (action === 'increment') {
+            newQuantity = currentQuantity + 1;
+          } else if (action === 'decrement') {
+            newQuantity = currentQuantity - 1;
+          }
+          
+          if (newQuantity > 0) {
+            return {
+              ...item,
+              quantity: newQuantity,
+              totalPrice: (item.price + (item.servicePrice || 0)) * newQuantity
+            };
+          } else {
+            return null; // Mark for removal
+          }
+        }
+        return item;
+      });
+      
+      // Filter out null items (items with 0 quantity)
+      const filteredCart = updatedCart.filter(item => item !== null);
+      
+      // Check if any items were removed
+      if (filteredCart.length < prev.length) {
+        const removedItem = prev.find(item => !filteredCart.some(cart => cart.id === item.id));
+        if (removedItem) {
+          showToastMessage(`"${removedItem.name}" has been removed from cart`);
+        }
+      }
+      
+      localStorage.setItem('cart', JSON.stringify(filteredCart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      return filteredCart;
+    });
+  };
+
   const removeItem = (id: number) => {
     setCartItems((prev) => {
+      const itemToRemove = prev.find(item => item.id === id);
       const updatedCart = prev.filter((item) => item.id !== id);
+      
+      if (itemToRemove) {
+        showToastMessage(`"${itemToRemove.name}" has been removed from cart`);
+      }
+      
       localStorage.setItem('cart', JSON.stringify(updatedCart));
+      window.dispatchEvent(new Event('cartUpdated'));
       return updatedCart;
     });
+  };
+
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
   };
 
   const applyCoupon = (couponCode: string) => {
@@ -93,7 +156,11 @@ export default function CartPage() {
   };
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + (item.totalPrice || 0), 0);
+    return cartItems.reduce((total, item) => {
+      const quantity = item.quantity || 1;
+      const itemTotal = (item.price + (item.servicePrice || 0)) * quantity;
+      return total + itemTotal;
+    }, 0);
   };
 
   const calculateDiscount = () => {
@@ -161,14 +228,24 @@ export default function CartPage() {
                         <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base lg:text-lg">
                           {item.name}
                         </h3>
-                        <p className="text-xs sm:text-sm text-gray-600 mt-1">{item.service}</p>
+                        <p className="text-xs sm:text-sm text-blue-600 mt-1">{item.service} (+₹{item.servicePrice || 0})</p>
+                        <p className="text-sm font-semibold text-gray-900 mt-1">₹{((item.price || 0) + (item.servicePrice || 0)).toFixed(1)}</p>
                       </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-all duration-200 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                      >
-                        <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </button>
+                      <div className="flex items-center gap-2 bg-blue-100 rounded-full px-2 py-1">
+                        <button
+                          onClick={() => updateQuantity(item.id, 'decrement')}
+                          className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="w-8 text-center text-gray-900 font-medium">{item.quantity || 1}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, 'increment')}
+                          className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -353,6 +430,13 @@ export default function CartPage() {
         </div>
       </main>
       <Footer />
+      
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 ease-in-out">
+          <p className="text-sm font-medium">{toastMessage}</p>
+        </div>
+      )}
     </div>
   );
 }

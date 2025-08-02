@@ -71,6 +71,7 @@ export default function ServiceModal({ product, onClose }: ServiceModalProps) {
       service: service.name,
       price: product.price || 0,
       servicePrice: service.price,
+      quantity: 1,
       totalPrice: (product.price || 0) + service.price
     };
     const updatedCart = [...existingCart, cartItem];

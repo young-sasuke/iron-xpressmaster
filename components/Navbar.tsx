@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"  
 import { User, Bell, ShoppingCart, Menu, X } from "lucide-react"
 
 interface NavbarProps {
@@ -11,10 +12,50 @@ interface NavbarProps {
 export default function Navbar({ cartCount }: NavbarProps) {
   const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [notificationCount, setNotificationCount] = useState(0)
+
+  useEffect(() => {
+    // Fetch unread notifications count from Supabase
+    const fetchNotificationCount = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('id', { count: 'exact' })
+          .eq('is_read', false)
+
+        if (error) {
+          console.error('Error fetching notifications:', error)
+        } else {
+          setNotificationCount(data?.length || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+        // Set default notification count if database is not accessible
+        setNotificationCount(0)
+      }
+    }
+
+    fetchNotificationCount()
+
+    // Set up real-time subscription for notifications
+    const notificationSubscription = supabase
+      .channel('notifications')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'notifications' },
+        () => {
+          fetchNotificationCount()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      notificationSubscription.unsubscribe()
+    }
+  }, [])
 
   const navItems = [
     { icon: User, label: "Profile", path: "/profile" },
-    { icon: Bell, label: "Notifications", path: "/notifications", badge: 3 },
+    { icon: Bell, label: "Notifications", path: "/notifications", badge: notificationCount },
     { icon: ShoppingCart, label: "Cart", path: "/cart", badge: cartCount },
   ]
 

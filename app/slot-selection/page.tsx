@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
-import { MapPin, Clock, Calendar, Truck, Zap, CreditCard, Banknote, ArrowLeft } from "lucide-react"
+import { MapPin, Clock, Calendar, Truck, Zap, CreditCard, Banknote, ArrowLeft, ShoppingBag } from "lucide-react"
 
 export default function SlotSelectionPage() {
   const router = useRouter()
@@ -18,6 +19,10 @@ export default function SlotSelectionPage() {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("")
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online")
+  
+  // Cart and pricing states
+  const [cartItems, setCartItems] = useState([])
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
 
   // Generate next 7 days
   const [availableDates, setAvailableDates] = useState<
@@ -29,16 +34,7 @@ export default function SlotSelectionPage() {
     }>
   >([])
 
-  const timeSlots = [
-    { id: "08:00-10:00", label: "08:00 AM - 10:00 AM", available: true },
-    { id: "10:00-12:00", label: "10:00 AM - 12:00 PM", available: true },
-    { id: "12:00-14:00", label: "12:00 PM - 02:00 PM", available: false },
-    { id: "14:00-16:00", label: "02:00 PM - 04:00 PM", available: true },
-    { id: "16:00-18:00", label: "04:00 PM - 06:00 PM", available: true },
-    { id: "18:00-20:00", label: "06:00 PM - 08:00 PM", available: true },
-  ]
-
-  const totalAmount = 65 // From review cart
+  const [timeSlots, setTimeSlots] = useState([])
 
   useEffect(() => {
     const generateDates = () => {
@@ -62,13 +58,72 @@ export default function SlotSelectionPage() {
     }
 
     generateDates()
+    // Fetch timeslots from Supabase
+    const fetchTimeSlots = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('delivery_slots')
+          .select('*')
+
+        if (error) throw error
+
+        setTimeSlots(data || [])
+      } catch (error) {
+        console.error('Error fetching delivery slots:', error)
+        // Set default time slots if Supabase is not available
+        setTimeSlots([
+          { id: "08:00-10:00", label: "08:00 AM - 10:00 AM", available: true },
+          { id: "10:00-12:00", label: "10:00 AM - 12:00 PM", available: true },
+          { id: "12:00-14:00", label: "12:00 PM - 02:00 PM", available: false },
+          { id: "14:00-16:00", label: "02:00 PM - 04:00 PM", available: true },
+          { id: "16:00-18:00", label: "04:00 PM - 06:00 PM", available: true },
+          { id: "18:00-20:00", label: "06:00 PM - 08:00 PM", available: true },
+        ])
+      }
+    }
+
+    // Load cart items and applied coupon
+    const loadCart = () => {
+      const savedCart = localStorage.getItem('cart')
+      if (savedCart) {
+        const cartData = JSON.parse(savedCart)
+        setCartItems(cartData)
+      }
+
+      const savedCoupon = localStorage.getItem('appliedCoupon')
+      if (savedCoupon) {
+        setAppliedCoupon(savedCoupon)
+      }
+    }
+
+    loadCart()
+    fetchTimeSlots()
   }, [])
+
+  // Calculate pricing
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => {
+      const quantity = item.quantity || 1
+      const itemTotal = (item.price + (item.servicePrice || 0)) * quantity
+      return total + itemTotal
+    }, 0)
+  }
+
+  const calculateDiscount = () => {
+    // For now, return 0. You can add coupon logic here
+    return 0
+  }
+
+  const subtotal = calculateSubtotal()
+  const deliveryFee = 30
+  const discount = calculateDiscount()
+  const totalAmount = subtotal + deliveryFee - discount
 
   const isSlotSelected = selectedDate && selectedTimeSlot
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar cartCount={0} />
+      <Navbar cartCount={cartItems.length} />
 
       <main className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
         <div className="max-w-4xl mx-auto">
@@ -229,16 +284,18 @@ export default function SlotSelectionPage() {
                 <div className="space-y-2 text-sm sm:text-base">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>₹55</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Delivery Fee</span>
-                    <span>₹20</span>
+                    <span>₹{deliveryFee.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>-₹10</span>
-                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount</span>
+                      <span>-₹{discount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="border-t pt-2">
                     <div className="flex justify-between font-semibold text-base sm:text-lg">
                       <span>Total</span>
