@@ -156,12 +156,12 @@ export default function CategoriesSection() {
         {/* Category Selection */}
         {!loading && !error && categories.length > 0 && (
           <div className="flex justify-center mb-8 sm:mb-12">
-            <div className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto pb-2">
+            <div className="flex gap-6 sm:gap-8 lg:gap-12 overflow-x-auto pb-2">
               {categories.map((category) => (
                 <div key={category.id} className="flex-shrink-0 text-center">
                   <button
                     onClick={() => handleCategoryChange(category.id)}
-                    className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full border-2 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center overflow-hidden ${
+                    className={`w-17 h-17 sm:w-22 sm:h-22 lg:w-24 lg:h-24 rounded-full border-2 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center overflow-hidden ${
                       selectedCategory === category.id
                         ? "bg-blue-600 text-white border-blue-600 shadow-lg focus:ring-blue-500"
                         : "bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:bg-blue-50 focus:ring-gray-500"
@@ -191,47 +191,52 @@ export default function CategoriesSection() {
         {/* Products Grid */}
         {!loading && !error && filteredProducts.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 lg:gap-8">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-              >
-                {/* Product Image */}
-                <div className="aspect-square bg-gray-100 p-4 sm:p-6">
-                  <img
-                    src={product.image_url || "/placeholder.svg"}
-                    alt={product.product_name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      img.src = "/placeholder.svg";
-                    }}
-                  />
-                </div>
+  {filteredProducts.map((product) => (
+    <div
+      key={product.id}
+      className={`bg-white rounded-xl border-2 ${
+        selectedProduct && selectedProduct.id === product.id
+          ? "border-blue-600 shadow-lg"
+          : "border-gray-300 hover:border-blue-300 hover:bg-blue-50"
+      } shadow-sm overflow-hidden transition-all duration-300 transform hover:scale-105`}
+    >
+      {/* Product Image */}
+      <div className="aspect-square bg-gray-100 p-4 sm:p-6">
+        <img
+          src={product.image_url || "/placeholder.svg"}
+          alt={product.product_name}
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            const img = e.target as HTMLImageElement;
+            img.src = "/placeholder.svg";
+          }}
+        />
+      </div>
 
-                {/* Product Info */}
-                <div className="p-3 sm:p-4">
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2 sm:mb-3 text-center">
-                    {product.product_name}
-                  </h3>
-                  <p className="text-center text-blue-600 font-semibold mb-3">
-                    ₹{product.product_price}
-                  </p>
-                  <button
-                    onClick={() => handleProductClick({
-                      ...product,
-                      name: product.product_name,
-                      image: product.image_url,
-                      price: product.product_price
-                    })}
-                    className="w-full bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-xs sm:text-sm transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Product Info */}
+      <div className="p-3 sm:p-4">
+        <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2 sm:mb-3 text-center">
+          {product.product_name}
+        </h3>
+        <p className="text-center text-blue-600 font-semibold mb-3">
+          ₹{product.product_price}
+        </p>
+        <button
+          onClick={() => handleProductClick({
+            ...product,
+            name: product.product_name,
+            image: product.image_url,
+            price: product.product_price
+          })}
+          className="w-full bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-xs sm:text-sm transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
+
         )}
 
         {/* No Products Message */}
