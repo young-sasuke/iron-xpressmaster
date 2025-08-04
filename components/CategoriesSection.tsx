@@ -156,12 +156,12 @@ export default function CategoriesSection() {
         {/* Category Selection */}
         {!loading && !error && categories.length > 0 && (
           <div className="flex justify-center mb-8 sm:mb-12">
-            <div className="flex gap-6 sm:gap-8 lg:gap-12 overflow-x-auto pb-2">
+            <div className="flex gap-3 sm:gap-6 lg:gap-8 overflow-x-auto pb-2 px-2">
               {categories.map((category) => (
                 <div key={category.id} className="flex-shrink-0 text-center">
                   <button
                     onClick={() => handleCategoryChange(category.id)}
-                    className={`w-17 h-17 sm:w-22 sm:h-22 lg:w-24 lg:h-24 rounded-full border-2 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center overflow-hidden ${
+                    className={`w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full border-2 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center overflow-hidden ${
                       selectedCategory === category.id
                         ? "bg-blue-600 text-white border-blue-600 shadow-lg focus:ring-blue-500"
                         : "bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:bg-blue-50 focus:ring-gray-500"
@@ -179,7 +179,7 @@ export default function CategoriesSection() {
                       </span>
                     )}
                   </button>
-                  <p className="mt-2 text-xs sm:text-sm font-medium text-gray-700">
+                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm font-medium text-gray-700 max-w-16 sm:max-w-20 truncate">
                     {category.name}
                   </p>
                 </div>

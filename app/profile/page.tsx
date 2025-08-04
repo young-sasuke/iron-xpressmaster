@@ -1,10 +1,56 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
-import { User, Mail, Phone, MapPin, Package, Star, Calendar, Edit } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { User, Mail, Phone, MapPin, Package, Star, Calendar, Edit, LogIn, LogOut } from "lucide-react"
 
 export default function ProfilePage() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Check current auth state
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+      } catch (error) {
+        console.error('Error checking auth:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogin = () => {
+    router.push('/login')
+  }
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
   const userStats = [
     { label: "Total Orders", value: "24", icon: Package },
     { label: "Rating", value: "4.8", icon: Star },
@@ -53,7 +99,24 @@ export default function ProfilePage() {
                   <button className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm sm:text-base flex items-center gap-2 mx-auto sm:mx-0 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                     <Edit className="w-4 h-4" />
                     Edit Profile
-                  </button>
+</button> 
+                  {user ? (
+                    <button
+                      onClick={handleLogout}
+                      className="bg-red-500 text-white px-3 sm:px-4 py-2 mt-2 rounded-lg hover:bg-red-600 transition-all duration-200 font-medium text-sm sm:text-base flex items-center gap-2 mx-auto sm:mx-0 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleLogin}
+                      className="bg-blue-600 text-white px-3 sm:px-4 py-2 mt-2 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm sm:text-base flex items-center gap-2 mx-auto sm:mx-0 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      Login
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-2 text-sm sm:text-base">
                   <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-600">
