@@ -219,7 +219,7 @@ export default function CategoriesSection() {
           {product.product_name}
         </h3>
         <p className="text-center text-blue-600 font-semibold mb-3">
-          ₹{product.product_price}
+         
         </p>
         <button
           onClick={() => handleProductClick({
