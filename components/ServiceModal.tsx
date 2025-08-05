@@ -21,6 +21,8 @@ interface Service {
   color_hex: string
   is_active: boolean
   sort_order: number
+  service_description?: string
+  tag?: string
 }
 
 export default function ServiceModal({ product, onClose }: ServiceModalProps) {
@@ -97,8 +99,8 @@ export default function ServiceModal({ product, onClose }: ServiceModalProps) {
 
   if (showSuccess) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 sm:p-6 z-50">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-green-600" />
           </div>
@@ -111,8 +113,8 @@ export default function ServiceModal({ product, onClose }: ServiceModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 sm:p-6 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div>
@@ -169,22 +171,36 @@ export default function ServiceModal({ product, onClose }: ServiceModalProps) {
                   onClick={() => handleServiceSelect(service)}
                   className="w-full p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
                       <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium mt-1"
                         style={{ backgroundColor: service.color_hex }}
                       >
                         {getIconComponent(service.icon)}
                       </div>
-                      <span className="font-medium text-gray-900 group-hover:text-blue-700">
-                        {service.name}
-                      </span>
+                      <div className="text-left">
+                        <div className="font-medium text-gray-900 group-hover:text-blue-700 text-left">
+                          {service.name}
+                        </div>
+                        {service.service_description && (
+                          <div className="text-sm text-gray-500 mt-1 leading-relaxed text-left">
+                            {service.service_description}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-semibold text-gray-900">
-                        {service.price > 0 ? `₹${service.price}` : 'Free'}
-                      </span>
+                    <div className="text-right ml-3">
+                      <div className="flex items-center gap-2">
+                        {service.tag && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500 text-white">
+                            {service.tag}
+                          </span>
+                        )}
+                        <span className="font-semibold text-gray-900">
+                          {service.price > 0 ? `₹${service.price}` : 'Free'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </button>

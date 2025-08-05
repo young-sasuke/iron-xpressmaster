@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import ServiceModal from "./ServiceModal"
+import ProductDetailsModal from "./ProductDetailsModal"
 import Toast from "./Toast"
 
 interface Category {
@@ -249,8 +249,8 @@ export default function CategoriesSection() {
         )}
       </div>
 
-      {/* Service Selection Modal */}
-      {isModalOpen && selectedProduct && <ServiceModal product={selectedProduct} onClose={closeModal} />}
+      {/* Product Details Modal */}
+      {isModalOpen && selectedProduct && <ProductDetailsModal product={selectedProduct} onClose={closeModal} />}
       
       {/* Toast Notifications */}
       {toast && (
