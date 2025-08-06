@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import ProductDetailsModal from "./ProductDetailsModal"
+import ServiceSelectionPopup from "./ServiceSelectionPopup"
 import Toast from "./Toast"
 
 interface Category {
@@ -28,6 +29,8 @@ export default function CategoriesSection() {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isServicePopupOpen, setIsServicePopupOpen] = useState(false)
+  const [productForService, setProductForService] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -113,9 +116,25 @@ export default function CategoriesSection() {
     setIsModalOpen(true)
   }
 
+  const handleAddButtonClick = (event: React.MouseEvent, product: any) => {
+    event.stopPropagation() // Prevent triggering product click
+    setProductForService(product)
+    setIsServicePopupOpen(true)
+  }
+
   const closeModal = () => {
     setIsModalOpen(false)
     setSelectedProduct(null)
+  }
+
+  const closeServicePopup = () => {
+    setIsServicePopupOpen(false)
+    setProductForService(null)
+  }
+
+  const handleServiceSelected = (service: any) => {
+    showToast(`${productForService?.product_name} with ${service.name} added to cart!`, 'success')
+    closeServicePopup()
   }
 
   const handleCategoryChange = (categoryId: string) => {
@@ -198,7 +217,13 @@ export default function CategoriesSection() {
   {filteredProducts.map((product) => (
     <div
       key={product.id}
-      className={`bg-white rounded-xl border-2 ${
+      onClick={() => handleProductClick({
+        ...product,
+        name: product.product_name,
+        image: product.image_url,
+        price: product.product_price
+      })}
+      className={`bg-white rounded-xl border-2 cursor-pointer ${
         selectedProduct && selectedProduct.id === product.id
           ? "border-blue-600 shadow-lg"
           : "border-gray-300 hover:border-blue-300 hover:bg-blue-50"
@@ -226,12 +251,7 @@ export default function CategoriesSection() {
          
         </p>
         <button
-          onClick={() => handleProductClick({
-            ...product,
-            name: product.product_name,
-            image: product.image_url,
-            price: product.product_price
-          })}
+          onClick={(e) => handleAddButtonClick(e, product)}
           className="w-full bg-blue-600 text-white py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-xs sm:text-sm transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Add
@@ -255,6 +275,15 @@ export default function CategoriesSection() {
 
       {/* Product Details Modal */}
       {isModalOpen && selectedProduct && <ProductDetailsModal product={selectedProduct} onClose={closeModal} />}
+      
+      {/* Service Selection Popup */}
+      {isServicePopupOpen && productForService && (
+        <ServiceSelectionPopup 
+          product={productForService} 
+          onClose={closeServicePopup} 
+          onServiceSelected={handleServiceSelected}
+        />
+      )}
       
       {/* Toast Notifications */}
       {toast && (
