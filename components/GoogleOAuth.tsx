@@ -20,7 +20,7 @@ export default function GoogleOAuth({ mode, className = "" }: GoogleOAuthProps) 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'http://localhost:3000/auth/callback',
+          redirectTo: 'https://ironxpressmaster.vercel.app/auth/callback',
           queryParams: {
             access_type: 'offline',
             prompt: 'consent select_account',
